@@ -3,20 +3,18 @@
     gulp plugin for uploading assets into AWS's S3 service.
 ****/
 
-var es          = require('event-stream'),
-    AWS         = require('aws-sdk'),
-    {
-        S3
-    } = require("@aws-sdk/client-s3"),
-    path        = require('path'),
-    mime        = require('mime'),
-    hasha       = require('hasha'),
-    _           = require('underscore'),
-    helper      = require('./src/helper.js'),
-    PluginError = require('plugin-error'),
-    fancyLog    = require('fancy-log'),
-    colors      = require('ansi-colors'),
-    gulpPrefixer;
+var es          = require('event-stream')
+,   AWS         = require('aws-sdk')
+,   path        = require('path')
+,   mime        = require('mime')
+,   hasha       = require('hasha')
+,   _           = require('underscore')
+,   helper      = require('./src/helper.js')
+,   PluginError = require('plugin-error')
+,   fancyLog    = require('fancy-log')
+,   colors      = require('ansi-colors')
+,   gulpPrefixer
+;
 
 const PLUGIN_NAME = 'gulp-s3-upload';
 
@@ -25,7 +23,7 @@ gulpPrefixer = function (AWS) {
     return function (options, s3conf) {
 
         var stream
-        ,   _s3         = new S3(s3conf || {})
+        ,   _s3         = new AWS.S3(s3conf || {})
         ,   the_bucket  = options.Bucket || options.bucket
         ;
 
