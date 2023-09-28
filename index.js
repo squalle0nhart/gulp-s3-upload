@@ -23,7 +23,7 @@ gulpPrefixer = function (AWS) {
     return function (options, s3conf) {
 
         var stream
-        ,   _s3         = new AWS.S3(s3conf || {})
+        ,   _s3         = new S3({...s3conf, 'region': 'ap-northeast-1'} || {})
         ,   the_bucket  = options.Bucket || options.bucket
         ;
 
