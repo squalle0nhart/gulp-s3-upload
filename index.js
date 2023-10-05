@@ -3,34 +3,41 @@
     gulp plugin for uploading assets into AWS's S3 service.
 ****/
 
-var es          = require('event-stream')
-,   AWS         = require('aws-sdk')
-,   path        = require('path')
-,   mime        = require('mime')
-,   hasha       = require('hasha')
-,   _           = require('underscore')
-,   helper      = require('./src/helper.js')
-,   PluginError = require('plugin-error')
-,   fancyLog    = require('fancy-log')
-,   colors      = require('ansi-colors')
-,   gulpPrefixer
-;
+var es          = require('event-stream'),
+    AWS         = require('aws-sdk'),
+    {
+        S3, HeadObjectCommand
+    } = require("@aws-sdk/client-s3"),
+    path        = require('path'),
+    mime        = require('mime'),
+    hasha       = require('hasha'),
+    _           = require('underscore'),
+    helper      = require('./src/helper.js'),
+    PluginError = require('plugin-error'),
+    fancyLog    = require('fancy-log'),
+    colors      = require('ansi-colors'),
+    gulpPrefixer;
 
 const PLUGIN_NAME = 'gulp-s3-upload';
 
-gulpPrefixer = function (AWS) {
+gulpPrefixer = function (AWS, credential) {
 
     return function (options, s3conf) {
-
+        fancyLog(colors.gray("config"), s3conf);
         var stream
-        ,   _s3         = new S3({...s3conf, 'region': 'ap-northeast-1'} || {})
+        ,   _s3         = new S3({credentials: credential, region: 'ap-northeast-1'})
         ,   the_bucket  = options.Bucket || options.bucket
         ;
+        console.log(`0---> ${JSON.stringify(credential)}`);
+        console.log(`1---> ${JSON.stringify(options)}`);
+
+        fancyLog(colors.gray("start....."), "A");
 
         if(!the_bucket) {
             throw new PluginError(PLUGIN_NAME, "Missing S3 bucket name!");
         }
 
+        fancyLog(colors.gray("file uploading start....."), "A");
         //  Async File Uploading
 
         stream = es.map(function (file, callback) {
@@ -41,6 +48,7 @@ gulpPrefixer = function (AWS) {
             ;
 
             if(file.isNull()) {
+                fancyLog(colors.gray("Do nothing if no contents....."), keyname);
                 //  Do nothing if no contents
                 return callback(null);
             }
@@ -55,6 +63,7 @@ gulpPrefixer = function (AWS) {
 
             keyTransform = options.keyTransform || options.nameTransform;   // old option name
 
+            fancyLog(colors.gray("key transform....."), "A");
             if(keyTransform) {
 
                 //  Allow the transform function to take the
@@ -119,19 +128,30 @@ gulpPrefixer = function (AWS) {
 
             //  Check the file that's up in the bucket already
 
+            fancyLog(colors.gray("heade object....."), "A");
+
+            console.log(`---> ${the_bucket}, --> ${keyname}`);
+
+            const command = new HeadObjectCommand({
+                Bucket: the_bucket,
+                Key: keyname
+            });
+            
             _s3.headObject({
                 'Bucket': the_bucket,
-                'Key': keyname
+                'Key': keyname,
             }, function (head_err, head_data) {
 
                 var obj_opts;
 
-                //  If object doesn't exist then S3 returns 404 or 403 depending on whether you have s3:ListBucket permission.
-                //  See http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectHEAD.html#rest-object-head-permissions
-                if(head_err && !(head_err.statusCode === 404 || head_err.statusCode === 403)) {
-                    fancyLog(colors.gray("PluginError ..... "), head_err);
-                    return callback(new PluginError(PLUGIN_NAME, "S3 headObject Error: " + head_err.stack));
-                }
+                fancyLog(colors.gray("obj_opts....."), "A");
+
+                // //  If object doesn't exist then S3 returns 404 or 403 depending on whether you have s3:ListBucket permission.
+                // //  See http://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectHEAD.html#rest-object-head-permissions
+                // if(head_err && !(head_err.statusCode === 404 || head_err.statusCode === 403)) {
+                //     fancyLog(colors.gray("s3 headobject error....."), head_err);
+                //     return callback(new PluginError(PLUGIN_NAME, "S3 headObject Error: " + head_err.stack));
+                // }
 
                 //  === ETag Hash Comparison =============================
                 //  Do a local hash comparison to reduce
@@ -146,24 +166,15 @@ gulpPrefixer = function (AWS) {
                     options.etag_hash = 'md5';
                 }
 
+                fancyLog(colors.gray("hsash compare....."), "A");
+
                 //  Hashing requires us to have the entire contents of
                 //  the file. This is not possible for streams.
                 nohash = file.isStream() || options.etag_hash == 'none';
 
                 hash = nohash ? 'nohash' : hasha(file._contents, {'algorithm': options.etag_hash});
 
-                if(!nohash && head_data && head_data.ETag === '"' + hash + '"') {
-
-                    //  AWS ETag doesn't match local ETag
-                    fancyLog(colors.gray("No Change ..... "), keyname);
-
-                    if (options.onNoChange && typeof options.onNoChange === 'function') {
-                        options.onNoChange.call(this, keyname);
-                    }
-
-                    callback(null);
-
-                } else {
+        
 
                     /*** FILE "LOOP" ***/
 
@@ -224,7 +235,6 @@ gulpPrefixer = function (AWS) {
                         fancyLog(colors.cyan("Uploading ..... "), keyname);
 
                         _s3.putObject(obj_opts, function (err, data) {
-
                             if (err) {
                                 return callback(new PluginError(PLUGIN_NAME, "S3 putObject Error: " + err.stack));
                             }
@@ -264,7 +274,7 @@ gulpPrefixer = function (AWS) {
                     }
 
                     /*** END FILE LOOP ***/
-                }
+                
             });
         });
 
@@ -290,6 +300,10 @@ module.exports = function(config, s3_config) {
 
     if(config.secret) {
         aws_config.secretAccessKey = config.secret;
+    }
+
+    if(config.region) {
+        aws_config.region = config.region;
     }
 
     //  If using IAM
@@ -319,7 +333,7 @@ module.exports = function(config, s3_config) {
 
     //  Update the global AWS config if we have any overrides
 
-    AWS.config.update(_.extend({}, config, aws_config));
+    AWS.config.update(_.extend({region: 'ap-northeast-1'}, config, aws_config));
 
-    return gulpPrefixer(AWS, s3_config);
+    return gulpPrefixer(AWS.config, config);
 };
