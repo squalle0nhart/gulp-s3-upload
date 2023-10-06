@@ -1,6 +1,6 @@
 {
-  "name": "gulp-s3-upload",
-  "version": "1.7.3",
+  "name": "gulp-s3-upload-v3",
+  "version": "1.7.4",
   "description": "A gulp task to asynchronous upload/update assets to an AWS S3 Bucket.",
   "main": "index.js",
   "directories": {
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/clineamb/gulp-s3-upload.git"
+    "url": "https://github.com/squalle0nhart/gulp-s3-upload"
   },
   "keywords": [
     "gulp",
@@ -25,12 +25,14 @@
   "author": "Caroline Amaba <her@carolineamaba.com>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/clineamb/gulp-s3-upload/issues"
+    "url": "https://github.com/squalle0nhart/gulp-s3-upload/issues"
   },
-  "homepage": "https://github.com/clineamb/gulp-s3-upload",
+  "homepage": "https://github.com/squalle0nhart/gulp-s3-upload",
   "dependencies": {
     "ansi-colors": "^3.2.3",
     "aws-sdk": "2.1466.0",
+    "@aws-sdk/client-s3": "3.425.0",
+    "@aws-sdk/lib-storage": "3.425.0",
     "event-stream": "3.3.4",
     "fancy-log": "^1.3.2",
     "hasha": "^3.0.0",
