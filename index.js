@@ -28,8 +28,6 @@ gulpPrefixer = function (AWS, credential) {
         ,   _s3         = new S3({credentials: credential, region: 'ap-northeast-1'})
         ,   the_bucket  = options.Bucket || options.bucket
         ;
-        console.log(`0---> ${JSON.stringify(credential)}`);
-        console.log(`1---> ${JSON.stringify(options)}`);
 
         fancyLog(colors.gray("start....."), "A");
 
