@@ -1,14 +1,7 @@
-# gulp-s3-upload
-__Version 1.7.3__
+# gulp-s3-upload-v3
+__Version 1.7.7 
 
-Use for uploading assets to Amazon S3 servers.
-This helps to make it an easy gulp task.
-
-This package uses the [aws-sdk (node)](http://aws.amazon.com/sdk-for-node-js/).
-
-[NPM](https://www.npmjs.com/package/gulp-s3-upload) / [Changelog](docs/changelog.md)
-
-__See full details in the [Changelog](docs/changelog.md).__
+Forked from: https://github.com/clineamb/gulp-s3-upload with latest aws-sdk version. It's also using aws-sdk v3
 
 ## Install
 
