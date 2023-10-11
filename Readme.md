@@ -5,7 +5,7 @@ Forked from: https://github.com/clineamb/gulp-s3-upload with latest aws-sdk vers
 
 ## Install
 
-    npm install gulp-s3-upload
+    npm install gulp-s3-upload-v3
 
 ## Usage
 
@@ -13,7 +13,7 @@ Forked from: https://github.com/clineamb/gulp-s3-upload with latest aws-sdk vers
 
 ```js
     var gulp = require('gulp');
-    var s3 = require('gulp-s3-upload')(config);
+    var s3 = require('gulp-s3-upload-v3')(config);
 ```
 
 ...where config is something like...
