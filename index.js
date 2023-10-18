@@ -6,7 +6,7 @@
 var es          = require('event-stream'),
     AWS         = require('aws-sdk'),
     {
-        S3, HeadObjectCommand, PutObjectCommand
+        S3, HeadObjectCommand, PutObjectCommand, S3Client
     } = require("@aws-sdk/client-s3"),
     { Upload }  = require("@aws-sdk/lib-storage"),
     path        = require('path'),
@@ -26,7 +26,7 @@ gulpPrefixer = function (AWS, credential) {
     return function (options, s3conf) {
         fancyLog(colors.gray("config"), s3conf);
         var stream
-        ,   _s3         = new S3({credentials: credential, region: 'ap-northeast-1'})
+        ,   _s3         = new S3Client({credentials: credential, region: 'ap-northeast-1', endpoint: 'https://s3-ap-northeast-1.amazonaws.com'})
         ,   the_bucket  = options.Bucket || options.bucket
         ;
 
@@ -232,62 +232,30 @@ gulpPrefixer = function (AWS, credential) {
                         fancyLog(colors.cyan("Uploading ..... "), keyname);
 
                         const putObjectCommand = new PutObjectCommand(obj_opts);
-
-                        // const uploadS3 = new Upload({
-                        //     client: _s3,
-                        //     queueSize: 4,
-                        //     leavePartsOnError: false,
-                        //     params: {
-                        //         Bucket: the_bucket,
-                        //         Key: keyname,
-                        //         Body: file.contents,
-                        //     }
-                        // });
-
-                        // uploadS3.on("httpUploadProgress", (progress) => {
-                        //     console.log(progress);
-                        // });
-
-                        // uploadS3.done().then(() => {
-                        //     // Doesn't exist in bucket; the object is new to the bucket
-                        //     fancyLog(colors.green("Uploaded! ..... "), keyname);
-
-                        //     if (options.onNew && typeof options.onNew === 'function') {
-                        //         options.onNew.call(this, keyname);
-                        //     }
-                        //     callback(null);
-                        // });
-
-                        _s3.send(putObjectCommand, function (err, data) {
-                            if (err) {
-                                return callback(new PluginError(PLUGIN_NAME, "S3 putObject Error: " + err.stack));
+                        const uploadS3 = new Upload({
+                            client: _s3,
+                            queueSize: 4,
+                            leavePartsOnError: false,
+                            params: {
+                                Bucket: the_bucket,
+                                Key: keyname,
+                                Body: file.contents,
+                                ACL: 'public-read',
                             }
+                        });
 
-                            if (head_data) {
-                                if (head_data.ETag !== data.ETag) {
-                                    fancyLog(colors.yellow("Updated ....... "), keyname);
+                        uploadS3.on("httpUploadProgress", (progress) => {
+                            console.log(progress);
+                        });
 
-                                    if (options.onChange && typeof options.onChange === 'function') {
-                                        options.onChange.call(this, keyname);
-                                    }
+                        uploadS3.done().then((result) => {
+                            fancyLog(colors.green("result! ..... "), JSON.stringify(result));
+                            // Doesn't exist in bucket; the object is new to the bucket
+                            fancyLog(colors.green("Uploaded! ..... "), keyname);
 
-                                } else {
-                                    fancyLog(colors.gray("No Change ..... "), keyname);
-
-                                    if (options.onNoChange && typeof options.onNoChange === 'function') {
-                                        options.onNoChange.call(this, keyname);
-                                    }
-
-                                }
-                            } else {
-                                // Doesn't exist in bucket; the object is new to the bucket
-                                fancyLog(colors.green("Uploaded! ..... "), keyname);
-
-                                if (options.onNew && typeof options.onNew === 'function') {
-                                    options.onNew.call(this, keyname);
-                                }
+                            if (options.onNew && typeof options.onNew === 'function') {
+                                options.onNew.call(this, keyname);
                             }
-
                             callback(null);
                         });
 
