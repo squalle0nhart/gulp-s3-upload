@@ -233,63 +233,63 @@ gulpPrefixer = function (AWS, credential) {
 
                         const putObjectCommand = new PutObjectCommand(obj_opts);
 
-                        const uploadS3 = new Upload({
-                            client: _s3,
-                            queueSize: 4,
-                            leavePartsOnError: false,
-                            params: {
-                                Bucket: the_bucket,
-                                Key: keyname,
-                                Body: file.contents,
-                            }
-                        });
-
-                        uploadS3.on("httpUploadProgress", (progress) => {
-                            console.log(progress);
-                        });
-
-                        uploadS3.done().then(() => {
-                            // Doesn't exist in bucket; the object is new to the bucket
-                            fancyLog(colors.green("Uploaded! ..... "), keyname);
-
-                            if (options.onNew && typeof options.onNew === 'function') {
-                                options.onNew.call(this, keyname);
-                            }
-                            callback(null);
-                        });
-
-                        // _s3.send(putObjectCommand, function (err, data) {
-                        //     if (err) {
-                        //         return callback(new PluginError(PLUGIN_NAME, "S3 putObject Error: " + err.stack));
+                        // const uploadS3 = new Upload({
+                        //     client: _s3,
+                        //     queueSize: 4,
+                        //     leavePartsOnError: false,
+                        //     params: {
+                        //         Bucket: the_bucket,
+                        //         Key: keyname,
+                        //         Body: file.contents,
                         //     }
+                        // });
 
-                        //     if (head_data) {
-                        //         if (head_data.ETag !== data.ETag) {
-                        //             fancyLog(colors.yellow("Updated ....... "), keyname);
+                        // uploadS3.on("httpUploadProgress", (progress) => {
+                        //     console.log(progress);
+                        // });
 
-                        //             if (options.onChange && typeof options.onChange === 'function') {
-                        //                 options.onChange.call(this, keyname);
-                        //             }
+                        // uploadS3.done().then(() => {
+                        //     // Doesn't exist in bucket; the object is new to the bucket
+                        //     fancyLog(colors.green("Uploaded! ..... "), keyname);
 
-                        //         } else {
-                        //             fancyLog(colors.gray("No Change ..... "), keyname);
-
-                        //             if (options.onNoChange && typeof options.onNoChange === 'function') {
-                        //                 options.onNoChange.call(this, keyname);
-                        //             }
-
-                        //         }
-                        //     } else {
-                        //         // Doesn't exist in bucket; the object is new to the bucket
-                        //         fancyLog(colors.green("Uploaded! ..... "), keyname);
-
-                        //         if (options.onNew && typeof options.onNew === 'function') {
-                        //             options.onNew.call(this, keyname);
-                        //         }
+                        //     if (options.onNew && typeof options.onNew === 'function') {
+                        //         options.onNew.call(this, keyname);
                         //     }
-
                         //     callback(null);
                         // });
+
+                        _s3.send(putObjectCommand, function (err, data) {
+                            if (err) {
+                                return callback(new PluginError(PLUGIN_NAME, "S3 putObject Error: " + err.stack));
+                            }
+
+                            if (head_data) {
+                                if (head_data.ETag !== data.ETag) {
+                                    fancyLog(colors.yellow("Updated ....... "), keyname);
+
+                                    if (options.onChange && typeof options.onChange === 'function') {
+                                        options.onChange.call(this, keyname);
+                                    }
+
+                                } else {
+                                    fancyLog(colors.gray("No Change ..... "), keyname);
+
+                                    if (options.onNoChange && typeof options.onNoChange === 'function') {
+                                        options.onNoChange.call(this, keyname);
+                                    }
+
+                                }
+                            } else {
+                                // Doesn't exist in bucket; the object is new to the bucket
+                                fancyLog(colors.green("Uploaded! ..... "), keyname);
+
+                                if (options.onNew && typeof options.onNew === 'function') {
+                                    options.onNew.call(this, keyname);
+                                }
+                            }
+
+                            callback(null);
+                        });
 
                     } else {
                         fancyLog(colors.gray("Skipping Upload of Existing File ..... "), keyname);
